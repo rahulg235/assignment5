@@ -69,6 +69,8 @@ public abstract class Critter{
 
 	private static List<Critter> alive = new java.util.ArrayList<Critter>();
 
+	private static int refreshAlgae = Params.refresh_algae_count;
+
 
 
 	// Gets the package name.  This assumes that Critter and its subclasses are all in the same package.
@@ -119,7 +121,84 @@ public abstract class Critter{
 		myPackage = Critter.class.getPackage().toString().split(" ")[1];
 	}
 
-	protected final String look(int direction, boolean steps) {return "";}
+	protected final String look(int direction, boolean steps) {
+		this.energy = this.energy - Params.look_energy_cost;
+		int tempX = 0;
+		int tempY = 0;
+		tempX = old_X;
+		tempY = old_Y;
+		int count = 0;
+		if(steps){
+			count = 2;
+		}
+		else{
+			count = 1;
+		}
+		switch (direction) {
+			case 0: //increment x
+				tempX = (tempX + count) % (Params.world_width);
+				break;
+			case 1: //increment x, decrement y
+				tempX = (tempX + count) % (Params.world_width);
+				if (tempY <= 0) {
+					tempY = Params.world_height - count;
+				} else {
+					tempY-=count;
+				}
+				break;
+			case 2: //decrement y
+				if (tempY <= 0) {
+					tempY = Params.world_height - count;
+				} else {
+					tempY-=count;
+				}
+				break;
+			case 3: //decrement x and y
+				if (tempY <= 0) {
+					tempY = Params.world_height - count;
+				} else {
+					tempY-=count;
+				}
+				if (tempX <= 0) {
+					tempX = Params.world_width - count;
+				} else {
+					tempX-=count;
+				}
+				break;
+			case 4: //decrement x
+				if (tempX <= 0) {
+					tempX = Params.world_width - count;
+				} else {
+					tempX-=count;
+				}
+				break;
+			case 5: //decrement x, increment y
+				if (tempX <= 0) {
+					tempX = Params.world_width - count;
+				} else {
+					tempX=-count;
+				}
+				tempY = (tempY + count) % Params.world_height;
+				break;
+			case 6: //increment y
+				tempY = (tempY + count) % Params.world_height;
+				break;
+			case 7: //increment x and y
+				tempY = (tempY + count) % Params.world_height;
+				tempX = (tempX + count) % (Params.world_width);
+				break;
+		}
+		for(int i = 0; i<alive.size(); i++){
+			if(alive.get(i).energy <= 0){
+				continue;
+			}
+			if(alive.get(i).old_X == tempX && alive.get(i).old_Y == tempY){
+				return alive.get(i).toString();
+			}
+
+		}
+		return null;
+	}
 
 
 	public static int getRandomInt(int max) {
@@ -188,7 +267,8 @@ public abstract class Critter{
 	}
 
 
-
+	private int old_X;
+	private int old_Y;
 	private int x_coord;
 
 	private int y_coord;
@@ -230,21 +310,22 @@ public abstract class Critter{
 		}
 		if(this.viewShape().equals(CritterShape.DIAMOND))
 		{
+			double sizeD = (double) size-0.2*(size);
 			Polygon p = new Polygon();
-			p.getPoints().addAll((double) size/2, (double) size/10,
-					(double) size/10, 	(double)size/2,
-					(double) size/2,	(double)size - size/10,
-					(double) size - size/10, 		(double)size/2);
+			p.getPoints().addAll((double) sizeD/2, (double) sizeD/10,
+					(double) sizeD/10, 	(double)sizeD/2,
+					(double) sizeD/2,	(double)sizeD - sizeD/10,
+					(double) sizeD - sizeD/10, 		(double)sizeD/2);
 			p.setFill(this.viewFillColor());
 			p.setStroke(this.viewOutlineColor());
-			p.setTranslateX((double) size/10);
+			p.setTranslateX((double) sizeD/10);
 			//p.setTranslateY((double) size/10);
 			return p;
 		}
 		if(this.viewShape().equals(CritterShape.STAR))
 		{
 			Polygon p = new Polygon();
-			double sizeD = (double) size;
+			double sizeD = (double) size-0.2*(size);
 			p.getPoints().addAll(
 					sizeD/2, sizeD/10,
 					2*sizeD/5, 2*sizeD/5,
@@ -276,139 +357,72 @@ public abstract class Critter{
 	 */
 
 	protected final void walk(int direction) {
-
 		System.out.println("WALK: Critter"+ this + " ENERGY: "+ this.energy + " DIRECTION: "+ direction + " NUM MOVE: " + num_move);
-
 		System.out.println("oldX: "+ x_coord + " oldY: "+ y_coord);
-
 		this.energy = this.energy - Params.walk_energy_cost;
-
 		this.num_move++;
-
 		//critter cannot move more than 2 times but energy is still deducted
-
 		if (energy >= 0) {
-
 			if (this.num_move < 2) {
-
 				moveFlag = 1;
-
 				switch (direction) {
-
 					case 0: //increment x
-
-						x_coord = (x_coord + 1) % (Params.world_width);
-
+						old_X = (old_X + 1) % (Params.world_width);
 						break;
-
 					case 1: //increment x, decrement y
-
-						x_coord = (x_coord + 1) % (Params.world_width);
-
-						if (y_coord <= 0) {
-
-							y_coord = Params.world_height - 1;
-
+						old_X = (old_X + 1) % (Params.world_width);
+						if (old_Y <= 0) {
+							old_Y = Params.world_height - 1;
 						} else {
-
-							y_coord--;
-
+							old_Y--;
 						}
-
 						break;
-
 					case 2: //decrement y
-
-						if (y_coord <= 0) {
-
-							y_coord = Params.world_height - 1;
-
+						if (old_Y <= 0) {
+							old_Y = Params.world_height - 1;
 						} else {
-
-							y_coord--;
-
+							old_Y--;
 						}
-
 						break;
-
 					case 3: //decrement x and y
-
-						if (y_coord <= 0) {
-
-							y_coord = Params.world_height - 1;
-
+						if (old_Y <= 0) {
+							old_Y = Params.world_height - 1;
 						} else {
-
-							y_coord--;
-
+							old_Y--;
 						}
-
-						if (x_coord <= 0) {
-
-							x_coord = Params.world_width - 1;
-
+						if (old_X <= 0) {
+							old_X = Params.world_width - 1;
 						} else {
-
-							x_coord--;
-
+							old_X--;
 						}
-
 						break;
-
 					case 4: //decrement x
-
-						if (x_coord <= 0) {
-
-							x_coord = Params.world_width - 1;
-
+						if (old_X <= 0) {
+							old_X = Params.world_width - 1;
 						} else {
-
-							x_coord--;
-
+							old_X--;
 						}
-
 						break;
-
 					case 5: //decrement x, increment y
-
-						if (x_coord <= 0) {
-
-							x_coord = Params.world_width - 1;
-
+						if (old_X <= 0) {
+							old_X = Params.world_width - 1;
 						} else {
-
-							x_coord--;
-
+							old_X--;
 						}
-
-						y_coord = (y_coord + 1) % Params.world_height;
-
+						old_Y = (old_Y + 1) % Params.world_height;
 						break;
-
 					case 6: //increment y
-
-						y_coord = (y_coord + 1) % Params.world_height;
-
+						old_Y = (old_Y + 1) % Params.world_height;
 						break;
-
 					case 7: //increment x and y
-
-						y_coord = (y_coord + 1) % Params.world_height;
-
-						x_coord = (x_coord + 1) % (Params.world_width);
-
+						old_Y = (old_Y + 1) % Params.world_height;
+						old_X = (old_X + 1) % (Params.world_width);
 						break;
-
-
 
 				}
-
 			}
-
 		}
-
 		System.out.println("XCOORD: "+ x_coord + " YCOORD: "+ y_coord);
-
 	}
 
 	protected final void run(int direction) {
@@ -821,506 +835,164 @@ public abstract class Critter{
 	 */
 
 	public static void worldTimeStep() {
-
 		int indexWinner = 0; //index of the winner
-
 		int indexOthers = 0; //to find 2 or more critters in the same position (shouldn't be able to walk/run to a postion with a creature
 
-
-
 		Collections.sort(alive, Comparator.comparingInt(Critter::getY_coord).thenComparing(Critter::getX_coord));
-
 		for (int i = 0; i < alive.size(); i++) {
-
+			alive.get(i).old_X = alive.get(i).x_coord;
+			alive.get(i).old_Y = alive.get(i).y_coord;
 			alive.get(i).num_move = 0; //reset before each doTimeStep
-
 			alive.get(i).moveFlag = 0;
-
 			alive.get(i).doTimeStep();
-
 			alive.get(i).moveFlag = 0; //reset to 0 so can be used in fight
-
 		}
-
+		for(int i = 0; i<alive.size(); i++){ //copy in new positions into the Critter
+			alive.get(i).x_coord = alive.get(i).old_X;
+			alive.get(i).y_coord = alive.get(i).old_Y;
+		}
 		for (int i = 0; i < alive.size(); i++) {
-
 			for (int j = i + 1; j < alive.size(); j++) {
-
 				//checking same position and if alive
-
 				if (alive.get(i).x_coord == alive.get(j).x_coord && alive.get(i).y_coord == alive.get(j).y_coord && alive.get(i).energy > 0 && alive.get(j).energy > 0) {
-
 					System.out.println("FIGHT: "+alive.get(i) + " x: " + alive.get(i).x_coord + "y: " + alive.get(i).y_coord);
-
 					System.out.println(alive.get(j) + "x: " + alive.get(i).x_coord + " y: " + alive.get(i).y_coord);
-
 					Critter p1 = alive.get(i);
-
 					Critter p2 = alive.get(j);
-
 					int p1_x = p1.x_coord;
-
 					int p1_y = p1.y_coord;
-
 					int p2_x = p2.x_coord;
-
 					int p2_y = p2.y_coord;
 
-
-
 					if (p1.fight(p2.toString())){//A wants to fight
-
+						p1.x_coord = p1.old_X;
+						p1.y_coord = p1.old_Y;
 						System.out.println(p1 + "wants to fight ");
-
 						//if (p1.moveFlag == 1) { //A moves, no fight btween A B
-
 						if(p1.checkFightWalk(p1_x, p1_y)){
-
 							System.out.println(p1 + " calls walk/run in fight method, no fight");
-
 							System.out.println("checking "+ p2+ "for other encounters");
-
 							checkMulitpleEncounters(p2, j); //check if B has another encounter
-
 						} else {
-
-							if (p2.fight(p1.toString())) { // B wants to fight
-
+							if (p2.fight(p1.toString())) {// B wants to fight
+								p2.x_coord= p2.old_X;
+								p2.y_coord = p2.old_Y;
 								System.out.println(p2 + "wants to fight ");
-
 								//if (p2.moveFlag == 1) { //B moves, no fight between A B
-
 								if(p2.checkFightWalk(p2_x, p2_y)){
-
 									System.out.println(p2 + " calls walk/run in fight method, no fight");
-
 									System.out.println("checking "+ p1+ "for other encounters");
-
 									checkMulitpleEncounters(p1, i);
-
 								} else { //fight between A and B
-
 									System.out.println("~~There should be a fight between " + p1 + " and "+ p2);
-
 									if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
 										System.out.println("FIGHT between " + p1 +" and " + p2);
-
 										int num1 = p1.getRandomInt(p1.energy);
-
 										int num2 = p2.getRandomInt(p2.energy);
-
 										if (num1 >= num2) { //p1 wins
-
 											System.out.println(p1 + " WINS FIGHT");
-
 											p1.energy += (p2.energy / 2);
-
 											p2.energy = 0;//will be removed later
-
 											if (p1.moveFlag == 0) {
-
 												System.out.println("checking if " + p1 + "has another encounter");
-
 												checkMulitpleEncounters(p1, i);
-
 											}
-
 										}
-
 										if (num1 < num2) {
-
 											//p2 wins
-
 											System.out.println(p2 + " WINS FIGHT");
-
 											p2.energy += (p1.energy / 2);
-
 											p1.energy = 0; //will be removed later
-
 											if (p2.moveFlag == 0) {
-
 												System.out.println("checking if " + p2 + "has another encounter");
-
 												checkMulitpleEncounters(p1, j);
-
 											}
-
 										}
-
 									}
 
-
-
 								}
-
 							}
-
 							//B doesnt want to fight but A does
-
 							else {
-
 								if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
 									System.out.println("SURRENDER: " + p2 + "doesn't want to fight, " + p1 + " wins ");
-
 									p1.energy += p2.energy / 2;
-
 									p2.energy = 0;
-
 									if (p1.moveFlag == 0) {
-
 										System.out.println("checking if " + p1 + "has another encounter");
-
 										checkMulitpleEncounters(p1, i);
-
 									}
-
 								}
-
 							}
 
-
-
 						}
-
 					}
-
 					else{
-
 						//A doesn't want to fight but B does
-
 						if (p2.fight(p1.toString())) {
-
+							p2.x_coord= p2.old_X;
+							p2.y_coord = p2.old_Y;
 							System.out.println("SURRENDER: " + p1 + "doesn't want to fight, " + p2  + " wins ");
-
 							if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
 								p2.energy += p1.energy / 2;
-
 								p1.energy = 0;
-
 							}
-
 							if(p2.moveFlag == 0){
-
 								System.out.println("checking if " + p1 + "has another encounter");
-
 								checkMulitpleEncounters(p2,j);
-
 							}
 
 
-
-
-
 						}
-
 						else{ //A and B dont want to fight, A wins
-
 							System.out.println("Encounter but no fight - "+ p1 + " wins");
-
 							if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
 								p1.energy += p2.energy / 2;
-
 								p2.energy = 0;
-
 							}
-
 							if(p1.moveFlag == 0){
-
 								checkMulitpleEncounters(p2,j);
-
 							}
-
-
 
 						}
-
 					}
-
-
 
 				}
-
 			}
-
 		}
 
-		///////////////////////
 
-                        /*
 
-                        if (p2.fight(p1.toString())) { //B wants to fight
-
-                            if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
-                                int num1 = p1.getRandomInt(p1.energy);
-
-                                int num2 = p2.getRandomInt(p2.energy);
-
-                                if (num1 >= num2) { //p1 wins
-
-                                    p1.energy += (p2.energy / 2);
-
-                                    p2.energy = 0;//will be removed later
-
-                                    if (p1.moveFlag == 0) {
-
-                                        checkMulitpleEncounters(p1, i);
-
-                                    }
-
-                                }
-
-                                if (num1 < num2) {
-
-                                    //p2 wins
-
-                                    p2.energy += (p1.energy / 2);
-
-                                    p1.energy = 0; //will be removed later
-
-                                    if (p2.moveFlag == 0) {
-
-                                        checkMulitpleEncounters(p1, j);
-
-                                    }
-
-                                }
-
-
-
-
-
-                            }
-
-
-
-                        } else { //A wants to fight but B doesn't
-
-                            if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
-                                p1.energy += p2.energy / 2;
-
-                                p2.energy = 0;
-
-                                if(p1.moveFlag == 0){
-
-                                    checkMulitpleEncounters(p1,i);
-
-                                }
-
-                            }
-
-
-
-                        }
-
-
-
-                    } else {
-
-                        //A doesn't want to fight but B does
-
-                        if (p2.fight(p1.toString())) {
-
-                            if (p1.x_coord == p2.x_coord && p1.y_coord == p2.y_coord && p1.energy > 0 && p2.energy > 0) {
-
-                                p2.energy += p1.energy / 2;
-
-                                p1.energy = 0;
-
-                            }
-
-                            if(p2.moveFlag == 0){
-
-                                checkMulitpleEncounters(p2,j);
-
-                            }
-
-
-
-
-
-                        }
-
-                    }
-
-
-
-
-
-                }
-
-            }
-
-*/
-
-
-
-		// Complete this method.
-
-
-
-
-
-		for(int i = 0; i<Params.refresh_algae_count; i++){
-
+		for(int i = 0; i<refreshAlgae; i++){
 			Algae a = new Algae();
-
 			a.setEnergy(Params.start_energy);
-
 			a.setX_coord(getRandomInt(Params.world_width));
-
 			a.setY_coord(getRandomInt(Params.world_height));
-
 			alive.add(a);
-
 			population.add(a);
-
 		}
-
 		//adding new babies into the population
-
 		for (Critter baby : babies) {
-
 			alive.add(baby);
 
-
-
 		}
-
 		babies.clear();
-
 		//removing rest energy
-
 		for (Critter c : alive) {
-
 			c.energy -= Params.rest_energy_cost;
-
 		}
-
 		//removing dead critters from collection and population
-
 		//add deadCritters to this
-
 		List <Critter> deadCritters = new ArrayList<Critter>();
-
 		for (Critter c : alive) {
-
 			if (c.energy <= 0) {
-
 				deadCritters.add(c);
-
+				System.out.println("Critter "+c + "DIED");
 			}
-
 		}
-
 		alive.removeAll(deadCritters);
-
 		population.removeAll(deadCritters);
 
-
-
-
-
-	}
-
-
-
-	//only be called if moveFlag = 0
-
-	private static void checkMulitpleEncounters(Critter p1, int indexWin) {
-
-		int indexOthers = indexWin + 1;
-
-		for (int i = indexOthers; i < alive.size(); i++) {
-
-			Critter o1 = alive.get(i);
-
-			if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
-
-				System.out.println("There is another encounter between "+ p1 + " and " + o1);
-
-				if (p1.fight(o1.toString())) { //A wants to fight
-
-					if (o1.fight(p1.toString())) { //B wants to fight
-
-						if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
-
-							int num1 = p1.getRandomInt(p1.energy);
-
-							int num2 = o1.getRandomInt(o1.energy);
-
-							if (num1 >= num2) { //p1 wins
-
-								p1.energy += (o1.energy / 2);
-
-								o1.energy = 0; //will be removed later
-
-							}
-
-							if (num1 < num2) {
-
-								//p2 wins
-
-								o1.energy += (p1.energy / 2);
-
-								p1.energy = 0; //will be removed later
-
-							}
-
-
-
-
-
-						}
-
-
-
-					} else { //A wants to fight but B doesn't
-
-						if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
-
-							p1.energy += o1.energy / 2;
-
-							o1.energy = 0;
-
-						}
-
-
-
-					}
-
-
-
-				} else {
-
-					//A doesn't want to fight but B does
-
-					if (o1.fight(p1.toString())) {
-
-						if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
-
-							o1.energy += p1.energy / 2;
-
-							p1.energy = 0;
-
-						}
-
-
-
-
-
-					}
-
-				}
-
-			}
-
-		}
 
 	}
 
@@ -1333,6 +1005,49 @@ public abstract class Critter{
 		}
 		return display;
 	}
+
+
+	private static void checkMulitpleEncounters(Critter p1, int indexWin) {
+		int indexOthers = indexWin + 1;
+		for (int i = indexOthers; i < alive.size(); i++) {
+			Critter o1 = alive.get(i);
+			if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
+				System.out.println("There is another encounter between "+ p1 + " and " + o1);
+				if (p1.fight(o1.toString())) { //A wants to fight
+					if (o1.fight(p1.toString())) { //B wants to fight
+						if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
+							int num1 = p1.getRandomInt(p1.energy);
+							int num2 = o1.getRandomInt(o1.energy);
+							if (num1 >= num2) { //p1 wins
+								p1.energy += (o1.energy / 2);
+								o1.energy = 0; //will be removed later
+							}
+							if (num1 < num2) {
+								//p2 wins
+								o1.energy += (p1.energy / 2);
+								p1.energy = 0; //will be removed later
+							}
+						}
+					} else { //A wants to fight but B doesn't
+						if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
+							p1.energy += o1.energy / 2;
+							o1.energy = 0;
+						}
+					}
+				} else {
+					//A doesn't want to fight but B does
+					if (o1.fight(p1.toString())) {
+						if (p1.x_coord == o1.x_coord && p1.y_coord == o1.y_coord && p1.energy > 0 && o1.energy > 0) {
+							o1.energy += p1.energy / 2;
+							p1.energy = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
 
 	public static void displayWorld(Stage primaryStage)
 

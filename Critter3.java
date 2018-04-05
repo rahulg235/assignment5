@@ -73,10 +73,10 @@ public class Critter3 extends Critter {
     @Override
     public boolean fight(String oponent)
     {
-        if(getRandomInt(2)==0)
-            this.walk(getRandomInt(8));
-        else
-            this.walk(getRandomInt(8));
+        //if(getRandomInt(2)==0)
+          //  this.walk(getRandomInt(8));
+        //else
+          //  this.walk(getRandomInt(8));
         return false;
     }
     /**
@@ -87,12 +87,18 @@ public class Critter3 extends Critter {
     @Override
     public void doTimeStep()
     {
+
         this.countSteps++;
         this.numShirts++;
-        if(numShirts%2==0)
-            walk(0);
-        else
-            walk(4);
+
+        String res = look(0, false);
+        if(res==null)
+        {
+           walk(0);
+        }
+        else{
+           run(0);
+        }
     }
     /**
      * prints out the location of each Critter3 and how many shirts it has

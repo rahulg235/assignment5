@@ -63,6 +63,10 @@ public class Critter2 extends Critter {
     @Override
     public boolean fight(String oponent) {
 
+        String r = look(dir, false);
+        if(!(r==null)){
+            return false; //do not walk in the direction because there is another critter there
+        }
         numSteps++;
         walk(dir);
         return false;
@@ -73,6 +77,7 @@ public class Critter2 extends Critter {
     @Override
     public void doTimeStep() {
         numSteps += 2;
+        run(1);
 
 
     }
